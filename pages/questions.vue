@@ -1,20 +1,25 @@
 <template>
   <div class="questions-container">
-    <!-- Show AddQuestionForm component when 'showForm' is true -->
+    <!-- Sidebar for question list -->
+    <div class="question-list-container">
+      <QuestionList @selectQuestion="selectedQuestionId = $event" />
+    </div>
+
+    <!-- Question details container (appears beside the question list) -->
+    <div v-if="selectedQuestionId" class="question-details-container">
+      <QuestionDetails :id="selectedQuestionId" @close="selectedQuestionId = null" />
+    </div>
+
+    <!-- Add Question Form Overlay -->
     <div v-if="showForm" class="form-overlay">
       <div class="form-container">
         <button @click="closeForm" class="close-btn">X</button>
         <AddQuestionForm @closeForm="closeForm" @addQuestion="addNewQuestion" />
       </div>
     </div>
-
-    <!-- Sidebar for question list -->
-    <div class="question-list-container">
-      <QuestionList />
-    </div>
   </div>
 
-  <!-- Add Question Button (outside the flex layout for proper placement) -->
+  <!-- Add Question Button -->
   <button @click="toggleForm" class="add-question-btn">Add Question</button>
 </template>
 
@@ -22,10 +27,12 @@
 import { ref } from 'vue'
 import AddQuestionForm from '~/components/AddQuestionForm.vue'
 import QuestionList from '~/components/QuestionList.vue'
+import QuestionDetails from '~/components/QuestionDetails.vue'
 
 const showForm = ref(false)
+const selectedQuestionId = ref(null)
 
-// Form visibility
+// Toggle form visibility
 const toggleForm = () => {
   showForm.value = !showForm.value
 }
@@ -36,26 +43,42 @@ const closeForm = () => {
 }
 
 // Add new question to the list after form submission
-const addNewQuestion = async (newQuestion) => {
-
+const addNewQuestion = (newQuestion) => {
+  // Add the new question to the list if needed
     questions.value.push(newQuestion)
 }
 </script>
 
 <style scoped>
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
 .questions-container {
   display: flex;
   gap: 20px;
-  justify-content: flex-start;
+  height: 86vh; /* Full viewport height */
+  width: 88vw; /* Full viewport width */
   align-items: flex-start;
-  height: 100%;
-  width: 100%;
-  margin-bottom: 20px; /* Add space below the container */
-  position: relative; /* Maintain relative position for the absolute button */
+  position: relative;
+  /* overflow: hidden; Avoids overflow on the page */
 }
 
 .question-list-container {
   flex: 1;
+  height: 100%;
+  overflow-y: auto; /* Enable scrolling */
+}
+
+.question-details-container {
+  flex: 2;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  overflow-y: auto; /* Enable scrolling */
 }
 
 .add-question-btn {
@@ -65,7 +88,7 @@ const addNewQuestion = async (newQuestion) => {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  position: absolute; /* Place the button outside the flex container */
+  position: fixed;
   bottom: 20px;
   left: 20px;
 }
@@ -75,19 +98,19 @@ const addNewQuestion = async (newQuestion) => {
 }
 
 .form-overlay {
-  position: fixed; /* Place the form overlay on top of the page */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .form-container {
-  width: 40%; /* Adjust width of the form container */
+  width: 40%;
   padding: 20px;
   background-color: #fff;
   border-radius: 5px;
