@@ -22,7 +22,7 @@
         <label for="functionSignature">Function Signature</label>
         <input type="text" v-model="newQuestion.function_signature" id="functionSignature" required />
   
-        <button type="submit" :disabled="!isFormValid">Submit Question</button>
+        <button class="submit-btn" type="submit" :disabled="!isFormValid">Submit Question</button>
       </form>
     </div>
   </template>
@@ -163,7 +163,7 @@
     margin-top: 5px;
   }
   
-  .question-form button {
+  .submit-btn {
     margin-top: 20px;
     padding: 10px 20px;
     background-color: #4CAF50;
@@ -173,11 +173,11 @@
     cursor: pointer;
   }
   
-  .question-form button:hover {
+  .submit-btn:hover {
     background-color: #45a049;
   }
   
-  .question-form button:disabled {
+  .submit-btn:disabled {
     background-color: #ccc;
     cursor: not-allowed;
   }
@@ -191,6 +191,7 @@
     font-size: 20px;
     color: #333;
     cursor: pointer;
+    background-color: #fff;
   }
   
   .close-btn:hover {
