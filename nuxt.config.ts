@@ -3,8 +3,13 @@ export default defineNuxtConfig({
   //devtools: { enabled: true },
   css: [
     '~/assets/css/style.css',
-    '@fortawesome/fontawesome-free/css/all.min.css'  // הוספת Font Awesome כאן
+    '@fortawesome/fontawesome-free/css/all.min.css'
+    //  'monaco-editor/min/vs/editor/editor.main.css' 
   ],
+  extends: ['@nuxt/ui-pro'],
   modules: ['@nuxt/ui'],
+  // plugins: [
+  //   '~/plugins/monaco-editor.js'
+  // ]
   
 })

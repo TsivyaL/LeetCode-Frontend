@@ -1,6 +1,5 @@
 <template>
   <div class="question-details" v-if="question && question.title">
-    <button @click="$emit('close')" class="close-btn">×</button>
     <h1 class="question-title">{{ question.title }}</h1>
     <p class="question-body">{{ question.body }}</p>
 
@@ -11,49 +10,54 @@
       <option value="python">Python</option>
     </select>
 
-    <!-- User Code Input (CodeMirror editor) -->
+    <!-- CodeMirror editor -->
     <h4>Write Your Code Here:</h4>
     <div ref="editor" style="height: 300px;"></div>
 
-    <button @click="submitCode">Submit Code</button>
+    <!-- Submit button with loading state -->
+    <button @click="submitCode" :disabled="isSubmitting || hasError">
+      <span v-if="isSubmitting">Submitting... <span class="spinner"></span></span>
+      <span v-else>Submit Code</span>
+    </button>
 
-    <!-- Output Section -->
+    <!-- Output and error message -->
     <h4>Output:</h4>
     <div class="output-window">
       {{ outputMessage }}
     </div>
-
-    <!-- Show error message if any -->
     <div v-if="error" class="error">{{ error }}</div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
-import { EditorView, basicSetup } from "codemirror";
+import { ref, onMounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { EditorView, basicSetup } from "codemirror"
 import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
 import { EditorState } from '@codemirror/state'
 
-// Define refs for question details, user input, and selected language
+// Define state variables
 const question = ref({})
-const userCode = ref('')
 const error = ref(null)
 const outputMessage = ref('')
-const selectedLanguage = ref('js') // Default language: JavaScript
+const selectedLanguage = ref('js')
+const isSubmitting = ref(false) // To track submission status
 const editor = ref(null)
-let editorView = null // Save the editor view to avoid recreating it each time
+let editorView = null
+let userCode = ref('')
+const route = useRoute()
+const questionId = route.params.questionId
+const hasError = ref(false) // Flag for error status
 
-const props = defineProps({
-  id: String
-})
-
-watch(() => props.id, async (newId) => {
+// Watch for questionId changes and fetch new question data
+watch(() => questionId, async (newId) => {
   if (newId) {
     await fetchQuestion(newId)
   }
 })
 
+// Fetch question data from the backend
 const fetchQuestion = async (id) => {
   try {
     const response = await fetch(`http://localhost:8080/questions/${id}`)
@@ -61,14 +65,14 @@ const fetchQuestion = async (id) => {
       throw new Error('Failed to fetch question')
     }
     question.value = await response.json()
-    updateFunctionSignature() // Update the function signature for the default language
+    updateFunctionSignature()
   } catch (err) {
     error.value = err.message
     console.error(err)
   }
 }
 
-// Update the function signature in the editor
+// Update function signature based on selected language
 const updateFunctionSignature = () => {
   const signature = question.value.function_signature || ''
   if (selectedLanguage.value === 'js') {
@@ -84,13 +88,11 @@ const updateFunctionSignature = () => {
 const createOrUpdateEditor = (mode) => {
   nextTick(() => {
     if (editorView) {
-      // Update the existing editor instead of creating a new one
       editorView.setState(EditorState.create({
         doc: userCode.value,
         extensions: [basicSetup, mode]
       }))
     } else {
-      // Create the editor for the first time
       editorView = new EditorView({
         state: EditorState.create({
           doc: userCode.value,
@@ -102,20 +104,45 @@ const createOrUpdateEditor = (mode) => {
   })
 }
 
-// Function to handle code submission
+// Check code for errors using eslint or pylint
+const checkCodeForErrors = () => {
+  if (selectedLanguage.value === 'js') {
+    // Use eslint for JavaScript
+    import('eslint').then(({ ESLint }) => {
+      const eslint = new ESLint()
+      eslint.lintText(userCode.value).then(results => {
+        hasError.value = results.some(result => result.messages.length > 0)
+        error.value = results.map(result => result.messages.join('\n')).join('\n')
+      })
+    })
+  } else if (selectedLanguage.value === 'python') {
+    // Use pylint for Python (assuming it's available in the environment)
+    import('flake8').then(({ lintCode })  => {
+      lint(userCode.value).then(results => {
+        hasError.value = results.some(result => result.messages.length > 0)
+        error.value = results.map(result => result.messages.join('\n')).join('\n')
+      })
+    })
+  }
+}
+
+// Handle code submission
 const submitCode = async () => {
+  isSubmitting.value = true
+  outputMessage.value = 'Submitting your code... Please wait.'
+
+  const userCodeToSubmit = editorView.state.doc.toString()
+
   try {
-    const url = `http://localhost:8080/answers/${props.id}`
+    const url = `http://localhost:8080/answers/${questionId}`
     const answerData = {
-      code: userCode.value,
+      code: userCodeToSubmit,
       language: selectedLanguage.value
     }
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(answerData)
     })
 
@@ -133,15 +160,32 @@ const submitCode = async () => {
     }
   } catch (error) {
     outputMessage.value = `Submission failed: ${error.message}`
+  } finally {
+    isSubmitting.value = false
   }
 }
 
+// Reset the output when starting to type or change the language
+const resetOutput = () => {
+  outputMessage.value = ''
+  error.value = null
+}
+
+// Watch for changes in editor content or language change
+watch([() => userCode.value, () => selectedLanguage.value], () => {
+  resetOutput()
+  checkCodeForErrors() // Check for errors whenever code changes
+})
+
 onMounted(async () => {
-  await updateFunctionSignature() // Wait for the function signature to be updated before rendering
+  if (questionId) {
+    await fetchQuestion(questionId)
+  }
 })
 </script>
 
 <style scoped>
+/* Style the question details container */
 .question-details {
   padding: 20px;
   background-color: #fff;
@@ -149,8 +193,12 @@ onMounted(async () => {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-left: 20px;
   flex: 1;
+  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* Style for input elements like textarea and select */
 textarea, select {
   width: 100%;
   padding: 10px;
@@ -158,6 +206,7 @@ textarea, select {
   border-radius: 5px;
 }
 
+/* Style the submit button */
 button {
   padding: 10px 20px;
   background-color: #315a33;
@@ -167,32 +216,27 @@ button {
   cursor: pointer;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #333;
-}
-.close-btn:hover {
-  color: red;
+/* Spinner animation */
+.spinner {
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error message styling */
 .error {
   color: red;
 }
 
-.question-title {
-  font-size: 2em; 
-  font-weight: bold; 
-  color: #333; 
-  margin-bottom: 20px; 
-}
-
-.question-body {
-  margin-bottom: 20px; 
-}
-
+/* Output window styling */
 .output-window {
   width: 100%;
   padding: 10px;
