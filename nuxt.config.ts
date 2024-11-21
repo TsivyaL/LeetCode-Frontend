@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     '@vscode/codicons/dist/codicon.css'
     //  'monaco-editor/min/vs/editor/editor.main.css' 
   ],
-  extends: ['@nuxt/ui-pro'],
+  // extends: ['@nuxt/ui-pro'],
   modules: ['@nuxt/ui'],
   // plugins: [
   //   '~/plugins/monaco-editor.js'
