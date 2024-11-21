@@ -2,7 +2,7 @@
 <template>
   <div>
     <h2>Welcome to the Dashboard</h2>
-    <p>This is the main area where content will be displayed.</p>
+    <p>This is the main area where content will be displayed.1</p>
   </div>
 </template>
 

@@ -58,7 +58,7 @@
               @click.stop="deleteQuestion(row.id)"
             />
             <UButton
-              icon="faCode"
+              icon="codicon:code"
               size="2xs"
               color="blue"
               variant="outline"
@@ -110,7 +110,7 @@
   <script setup>
   import { ref, onMounted, computed } from 'vue'
   import AddQuestionForm from '~/components/AddQuestionForm.vue'
-  import QuestionDetails from '~/components/QuestionDetails.vue'
+  // import QuestionDetails from '~/components/QuestionDetails.vue'
   import { useRouter } from 'vue-router'
   
   const questions = ref([])

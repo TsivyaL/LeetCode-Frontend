@@ -15,9 +15,9 @@
     <div ref="editor" style="height: 300px;"></div>
 
     <!-- Submit button with loading state -->
-    <button @click="submitCode" :disabled="isSubmitting || hasError">
+    <button @click="submitCode" :disabled="isSubmitting">
       <span v-if="isSubmitting">Submitting... <span class="spinner"></span></span>
-      <span v-else>Submit Code</span>
+      <span v-else> <i class="codicon codicon-run-above"></i> Submit Code</span>
     </button>
 
     <!-- Output and error message -->
@@ -30,9 +30,10 @@
 </template>
 
 <script setup>
+// Vue Composition API hooks
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { EditorView, basicSetup } from "codemirror"
+import { EditorView, basicSetup } from "codemirror";
 import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
 import { EditorState } from '@codemirror/state'
@@ -48,7 +49,6 @@ let editorView = null
 let userCode = ref('')
 const route = useRoute()
 const questionId = route.params.questionId
-const hasError = ref(false) // Flag for error status
 
 // Watch for questionId changes and fetch new question data
 watch(() => questionId, async (newId) => {
@@ -104,32 +104,10 @@ const createOrUpdateEditor = (mode) => {
   })
 }
 
-// Check code for errors using eslint or pylint
-const checkCodeForErrors = () => {
-  if (selectedLanguage.value === 'js') {
-    // Use eslint for JavaScript
-    import('eslint').then(({ ESLint }) => {
-      const eslint = new ESLint()
-      eslint.lintText(userCode.value).then(results => {
-        hasError.value = results.some(result => result.messages.length > 0)
-        error.value = results.map(result => result.messages.join('\n')).join('\n')
-      })
-    })
-  } else if (selectedLanguage.value === 'python') {
-    // Use pylint for Python (assuming it's available in the environment)
-    import('flake8').then(({ lintCode })  => {
-      lint(userCode.value).then(results => {
-        hasError.value = results.some(result => result.messages.length > 0)
-        error.value = results.map(result => result.messages.join('\n')).join('\n')
-      })
-    })
-  }
-}
-
 // Handle code submission
 const submitCode = async () => {
-  isSubmitting.value = true
-  outputMessage.value = 'Submitting your code... Please wait.'
+  isSubmitting.value = true // Show the spinner while submitting
+  outputMessage.value = 'Submitting your code... Please wait.' // Show wait message
 
   const userCodeToSubmit = editorView.state.doc.toString()
 
@@ -161,7 +139,7 @@ const submitCode = async () => {
   } catch (error) {
     outputMessage.value = `Submission failed: ${error.message}`
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false // Hide the spinner once done
   }
 }
 
@@ -172,10 +150,7 @@ const resetOutput = () => {
 }
 
 // Watch for changes in editor content or language change
-watch([() => userCode.value, () => selectedLanguage.value], () => {
-  resetOutput()
-  checkCodeForErrors() // Check for errors whenever code changes
-})
+watch([() => userCode.value, () => selectedLanguage.value], resetOutput)
 
 onMounted(async () => {
   if (questionId) {

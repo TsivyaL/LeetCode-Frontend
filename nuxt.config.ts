@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   //devtools: { enabled: true },
   css: [
     '~/assets/css/style.css',
-    '@fortawesome/fontawesome-free/css/all.min.css'
+    '@fortawesome/fontawesome-free/css/all.min.css',
+    '@vscode/codicons/dist/codicon.css'
     //  'monaco-editor/min/vs/editor/editor.main.css' 
   ],
   extends: ['@nuxt/ui-pro'],

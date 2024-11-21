@@ -1,0 +1,39 @@
+name: CI Pipeline for Frontend
+
+on:
+  push:
+    branches:
+      - main  # Run the workflow on every push to the main branch
+  pull_request:
+    branches:
+      - main  # Run the workflow on pull requests targeting the main branch
+
+jobs:
+  build_and_push_frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout code from the repository
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Docker Buildx (required for building Docker images)
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # Step 3: Login to Docker Hub using stored secrets
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub username stored as a secret
+        password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub password stored as a secret
+
+    # Step 4: Build the Docker image for the frontend
+    - name: Build Frontend Docker Image
+      run: |
+        docker build -t tsivyal/nuxt-frontend:latest -f Dockerfile .
+
+    # Step 5: Push the frontend Docker image to Docker Hub
+    - name: Push Frontend Docker Image
+      run: |
+        docker push tsivyal/nuxt-frontend:latest
