@@ -37,7 +37,13 @@
       </template>
 
       <template #status-data="{ row }">
-        <UBadge size="xs" :label="row.completed ? 'Completed' : 'In Progress'" :color="row.completed ? 'emerald' : 'orange'" variant="subtle" />
+        <UBadge 
+            size="xs" 
+          :label="row.status === 'Completed' ? 'Completed' : (row.status === 'In Progress' ? 'In Progress' : 'Not Started')" 
+          :color="row.status === 'Completed' ? 'emerald' : (row.status === 'In Progress' ? 'orange' : 'gray')" 
+          variant="subtle" 
+/>
+
       </template>
 
       <template #actions-data="{ row }">

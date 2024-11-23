@@ -63,6 +63,9 @@ watch(() => questionId, async (newId) => {
     await fetchQuestion(newId)
   }
 })
+watch(() => selectedLanguage.value, () => {
+  updateFunctionSignature(selectedLanguage.value);
+});
 
 // Fetch question data from the backend
 const fetchQuestion = async (id) => {
@@ -72,24 +75,66 @@ const fetchQuestion = async (id) => {
       throw new Error('Failed to fetch question')
     }
     question.value = await response.json()
-    updateFunctionSignature()
+    // If there's existing code in progress, display it
+    if (question.value.code_in_progress) {
+      userCode.value = question.value.code_in_progress
+
+      // Try to detect the language from the code
+      const code = question.value.code_in_progress
+      if (code.startsWith('def ')) {
+        // If the code starts with 'def', assume it's Python
+        if (selectedLanguage.value !== 'python') {
+          // You may choose to not clear the code here if you just want to show it
+          // updateFunctionSignature('python') // Force Python signature update
+          selectedLanguage.value = 'python'
+        } else {
+          createOrUpdateEditor(python()) // Set Python editor
+        }
+      } else if (code.startsWith('function ')) {
+        // If the code starts with 'function', assume it's JavaScript
+        if (selectedLanguage.value !== 'js') {
+          // You may choose to not clear the code here if you just want to show it
+          // updateFunctionSignature('js') // Force JS signature update
+          selectedLanguage.value = 'js'
+        } else {
+          createOrUpdateEditor(javascript()) // Set JavaScript editor
+        }
+      } else {
+        // If the language is unknown, ask the user to select it
+        userCode.value = ''
+        updateFunctionSignature() // Prompt the user to select a language
+      }
+    } else {
+      updateFunctionSignature() // If no code is in progress, update the function signature
+    }
   } catch (err) {
     error.value = err.message
     console.error(err)
   }
 }
+debugger
+// Update the function signature based on the selected language
+const updateFunctionSignature = (language = selectedLanguage.value) => {
+  console.log("updateFunctionSignature ");
+  
+  const signature = question.value.function_signature || '';
 
-// Update function signature based on selected language
-const updateFunctionSignature = () => {
-  const signature = question.value.function_signature || ''
-  if (selectedLanguage.value === 'js') {
-    userCode.value = `function solution(${signature}) {\n  // Write your solution here\n}`
-    createOrUpdateEditor(javascript())
-  } else if (selectedLanguage.value === 'python') {
-    userCode.value = `def solution(${signature}):\n    # Write your solution here\n`
-    createOrUpdateEditor(python())
+  if (language === 'js') {
+    // If there's no user code and it's not already a valid JavaScript function, set the default JS function template
+    if (!userCode.value || !userCode.value.startsWith('function ')) {
+      userCode.value = `function solution(${signature}) {\n  // Write your solution here\n}`;
+    }
+    createOrUpdateEditor(javascript()); // Set JavaScript editor
+ debugger
+  } else if (language === 'python') {
+    // If there's no user code and it's not already a valid Python function, set the default Python function template
+    if (!userCode.value || !userCode.value.startsWith('def ')) {
+      userCode.value = `def solution(${signature}):\n    # Write your solution here\n`;
+    }
+    createOrUpdateEditor(python()); // Set Python editor
   }
-}
+};
+
 
 // Create or update the CodeMirror editor
 const createOrUpdateEditor = (mode) => {
