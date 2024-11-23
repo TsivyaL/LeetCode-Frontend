@@ -223,5 +223,4 @@ const addNewQuestion = (newQuestion) => {
   background-color: #fff;
   border-radius: 5px;
 }
-
 </style>
