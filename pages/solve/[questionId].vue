@@ -1,5 +1,6 @@
 <template>
   <div class="question-details" v-if="question && question.title">
+    <!-- Question title and body -->
     <h1 class="question-title">{{ question.title }}</h1>
     <p class="question-body">{{ question.body }}</p>
 
@@ -26,13 +27,18 @@
       {{ outputMessage }}
     </div>
     <div v-if="error" class="error">{{ error }}</div>
+
+    <!-- Back to Questions button -->
+    <button @click="goBackToQuestions" class="back-button">
+      <i class="codicon codicon-arrow-left"></i> Back to Questions
+    </button>
   </div>
 </template>
 
 <script setup>
 // Vue Composition API hooks
 import { ref, onMounted, nextTick, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { EditorView, basicSetup } from "codemirror";
 import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
@@ -48,6 +54,7 @@ const editor = ref(null)
 let editorView = null
 let userCode = ref('')
 const route = useRoute()
+const router = useRouter() // Add useRouter to navigate
 const questionId = route.params.questionId
 
 // Watch for questionId changes and fetch new question data
@@ -157,6 +164,11 @@ onMounted(async () => {
     await fetchQuestion(questionId)
   }
 })
+
+// Go back to the questions page
+const goBackToQuestions = () => {
+  router.push('/questions') // Navigate to the questions page
+}
 </script>
 
 <style scoped>
@@ -185,6 +197,17 @@ textarea, select {
 button {
   padding: 10px 20px;
   background-color: #315a33;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Back button styling */
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #2d3748;
   color: white;
   border: none;
   border-radius: 5px;

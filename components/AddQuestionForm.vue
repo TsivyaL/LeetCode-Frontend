@@ -103,13 +103,12 @@ const submitQuestion = async () => {
       throw new Error('Failed to add question')
     }
 
-    // Emit event to close form
-    emit('closeForm')
     // Emit event to add the question to the list
     emit('addQuestion', questionData)
 
     // Close the form after successful submission
     closeForm()
+
     alert('Question added successfully!')
   } catch (err) {
     console.error(err)
