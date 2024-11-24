@@ -1,5 +1,5 @@
-<template>
-  <div class="question-form" @click.self="closeForm">
+<template >
+  <div v-if="showForm" class="question-form" @click.self="closeForm">
     <!-- Close button (X) to close the form without saving -->
     <button @click="closeForm" class="close-btn">X</button>
 
@@ -38,7 +38,7 @@ const newQuestion = ref({
   expected_outputs: '',
   function_signature: ''
 })
-
+let showForm = ref(true)
 const isFormValid = ref(true)
 const isInputsValid = ref(true)
 const isExpectedOutputsValid = ref(true)
@@ -119,6 +119,7 @@ const submitQuestion = async () => {
 // Function to close the form without saving
 const closeForm = () => {
   emit('closeForm')
+  showForm.value = false
   // Reset the form data to cancel any changes
   newQuestion.value = { title: '', body: '', inputs: '', expected_outputs: '', function_signature: '' }
 }

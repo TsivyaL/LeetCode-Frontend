@@ -112,10 +112,8 @@ const fetchQuestion = async (id) => {
     console.error(err)
   }
 }
-debugger
 // Update the function signature based on the selected language
 const updateFunctionSignature = (language = selectedLanguage.value) => {
-  console.log("updateFunctionSignature ");
   
   const signature = question.value.function_signature || '';
 
